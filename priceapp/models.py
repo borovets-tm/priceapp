@@ -37,6 +37,7 @@ class Product(models.Model):
     sku = models.CharField(
         max_length=50,
         null=True,
+        blank=True,
         unique=True,
         help_text='IERM7.WW2'
     )

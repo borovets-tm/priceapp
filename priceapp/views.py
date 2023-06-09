@@ -3,7 +3,7 @@ from _csv import reader
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
 from django.views import View
 from django.views.generic import CreateView
@@ -358,3 +358,4 @@ class MissingProductFormView(View):
 class ProductCreateView(CreateView):
     model = Product
     fields = 'sku', 'ean', 'name', 'category', 'country', 'price', 'old_price', 'red_price'
+    success_url = reverse_lazy('priceapp:printsheet_delete')
