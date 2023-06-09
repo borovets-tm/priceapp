@@ -1,0 +1,62 @@
+{% extends 'priceapp/base.html' %}
+{% load static %}
+{% block page_content %}
+    <div>
+        <div class="wrap">
+            <div class="Section-content">
+                <div class="Order-block Order-block_OPEN" id="login">
+                    <header class="Section-header Section-header_sm">
+                        <h2 class="Section-title">
+                            Обновление цен из ICQ
+                        </h2>
+                    </header>
+                    {% block body_icq_update %}
+                        <div class="Cards">
+                            <div class="Card">
+                                <form class="form" method="post">
+                                    {% csrf_token %}
+                                    {{ form.as_p }}
+                                    <button class="btn btn_success Order-btnReg" type="submit">
+                                        Обновить
+                                    </button>
+                                </form>
+                            </div>
+                            <table class="Card table-instruction-by-update-price">
+                                <tr>
+                                    <td colspan="2" class="row-instruction-by-update-price">
+                                        <h2>ИНСТРУКЦИЯ</h2>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="row-instruction-by-update-price">
+                                        1. Скопируйте присланный текст из ICQ.
+                                        <div class="Card-picture">
+                                            <img src="{% static 'steps/step-1.jpg' %}" alt="step-1.jpg"/>
+                                        </div>
+                                        <br>
+                                        2. Вставьте текст в поле.
+                                        <div class="Card-picture">
+                                            <img src="{% static 'steps/step-2.jpg' %}" alt="step-2.jpg"/>
+                                        </div>
+                                    </td>
+                                    <td class="row-instruction-by-update-price">
+                                        3. Удалите пробелы между цифрами в ценах, а также комментарии в тексте.
+                                        <div class="Card-picture">
+                                            <img src="{% static 'steps/step-3.jpg' %}" alt="step-3.jpg"/>
+                                        </div>
+                                        <br>
+                                        4. Нажмите на кнопку обновить.
+                                        <div class="Card-picture">
+                                            <img src="{% static 'steps/button-submit-update.png' %}"
+                                                 alt="button-submit-update.png"/>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

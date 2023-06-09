@@ -1,0 +1,36 @@
+{% extends 'priceapp/base.html' %}
+{% load static %}
+{% block page_content %}
+    <div>
+        <div class="wrap">
+            <div class="Section-content">
+                <div class="Order-block Order-block_OPEN" id="login">
+                    <header class="Section-header Section-header_sm">
+                        <h2 class="Section-title">
+                            Добавление товара
+                        </h2>
+                    </header>
+                    <div class="Cards">
+                        <div class="Card block-create-product-form">
+                            <form class="form product-create-form" method="post">
+                                {% csrf_token %}
+                                <table class="table-create-product-form">
+                                <caption>Внесите информацию о товаре</caption>
+                                    {% for field in form %}
+                                        <tr>
+                                            <td>{{ field.label }}</td>
+                                            <td>{{ field }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                                <button class="btn btn_success Order-btnReg button-create-product-form" type="submit">
+                                    Добавить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

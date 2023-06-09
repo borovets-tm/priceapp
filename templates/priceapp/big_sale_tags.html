@@ -1,0 +1,40 @@
+{% load static %}
+<tbody class="big-tags-layout">
+
+<tr class="big-sale-first-line">
+    <td class="big-sale-category"
+        style="font-size: calc(min(25px / {{ tag.category.name|length }} * 12, 25px));"
+    >{{ tag.category.name }}</td>
+
+    <td class="big-sale-discount-type" style="font-size: calc(min(25px / {{ tag.category.name|length }} * 12, 25px));"
+    >{{ tag.discount_type }}</td>
+</tr>
+
+<tr class="big-second-line">
+    <td class="big-product-name" style="font-size: calc(min(40px / {{ tag.product|length }} * 14, 40px));"
+        colspan="2"
+    >{{ tag.product }}</td>
+</tr>
+
+<tr class="big-sale-third-line">
+    <td class="big-sale-old-price"
+        style="font-size: calc(min(38px / {{ tag.old_price|make_list|length }} * 7, 70px));"
+    ><p></p>{{ tag.old_price }}</td>
+
+    <td {% if tag.red_price %}
+        class="big-sale-price red-price"
+    {% else %}
+        class="big-sale-price black-price"
+    {% endif %} style="font-size: calc(min(38px / {{ tag.price|make_list|length }} * 7, 70px));"
+    >{{ tag.price }}</td>
+</tr>
+
+<tr class="big-fourth-line">
+    <td class="big-country" style="font-size: calc(min(12px / {{ tag.country.name|length }} * 26, 12px));"
+    >{{ tag.country.name }}</td>
+    {% now 'd.m.Y' as date %}
+    <td class="big-date" style="font-size: calc(min(12px / {{ date|length }} * 26, 12px));"
+    ><em>{{ date }}</em></td>
+</tr>
+
+</tbody>

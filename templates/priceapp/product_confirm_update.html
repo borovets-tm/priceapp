@@ -1,0 +1,42 @@
+{% extends 'priceapp/product_icq_update.html' %}
+{% load widget_tweaks %}
+{% block body_icq_update %}
+    <form method="post">
+        {% csrf_token %}
+        <caption>Проверьте корректность и подтвердите обновление цен:</caption>
+        <table class="Cards table-with-result-update">
+            <tr>
+                <th class="Card">
+                    Наименование товара
+                </th>
+                <th class="Card">
+                    Цена
+                </th>
+                <th class="Card">
+                    Старая цена
+                </th>
+                <th class="Card">
+                    Красная цена
+                </th>
+            </tr>
+            <input type="hidden" name="form-TOTAL_FORMS" value="{{ formset|length }}" id="id_form-TOTAL_FORMS">
+            <input type="hidden" name="form-INITIAL_FORMS" value="{{ formset|length }}" id="id_form-INITIAL_FORMS">
+            <input type="hidden" name="form-MIN_NUM_FORMS" value="0" id="id_form-MIN_NUM_FORMS">
+            <input type="hidden" name="form-MAX_NUM_FORMS" value="1000" id="id_form-MAX_NUM_FORMS">
+            {% for form in formset|slice:':-1' %}
+                <tr>
+                    {% for field in form %}
+                        {% if field.name|striptags %}
+                            <td>
+                                {{ field }}
+                            </td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+        <button class="btn btn_success Order-btnReg" type="submit">
+            Подтвердить
+        </button>
+    </form>
+{% endblock %}

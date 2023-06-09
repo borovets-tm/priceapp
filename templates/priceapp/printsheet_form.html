@@ -1,0 +1,68 @@
+{% extends 'priceapp/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block page_content %}
+    <div>
+        <div class="Section-content">
+            <div class="Order-block Order-block_OPEN" id="login">
+                <header class="Section-header Section-header_sm">
+                    <h2 class="Section-title">Сканер штрих-кода</h2>
+                </header>
+                <div class="Cards">
+                    {% for tag in tag_list %}
+                        <div class="Card" id="{{ tag.size }}">
+                            <form class="form Cart" method="post">
+                                {% csrf_token %}
+                                {% with 'sample_tag/'|add:tag.size|add:'-'|add:tag.is_discount.1|add:'.jpg' as image %}
+                                    <img src="{% static image %}" alt="{{ image }}" class="sample-tag">
+                                {% endwith %}
+                                <p>{{ form.input_line.label }}</p>
+                                {#                            Отсканировано: {{ last_scan }}<br>#}
+                                {% if tag.size == last_scan.tag.size and tag.is_discount.0 == last_scan.tag.is_discount %}
+                                    <p>Последний добавленный:</p>
+                                    <p>{{ last_scan.product }}</p>
+                                    {{ form.input_line|attr:"autofocus" }}
+                                {% else %}
+                                    <p>&nbsp;</p>
+                                    <p>&nbsp;</p>
+                                    {{ form.input_line }}
+                                {% endif %}
+                                {% with 'value:'|add:tag.size as size %}
+                                    {{ form.size|attr:size }}
+                                {% endwith %}
+                                {% with 'value:'|add:tag.is_discount.1 as is_discount %}
+                                    {{ form.is_discount|attr:is_discount }}
+                                {% endwith %}
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="add-custom-tag">
+                    <div class="wrap wrap-add-custom-tag">
+                        <h6 class="Middle-title">Добавить ценник по уценки:</h6>
+                        <div class="Middle-header Middle-header-free-form">
+                            <form class="row free-form" id="free_form" method="post">
+                                {% csrf_token %}
+                                {% for field in free_form %}
+                                    <p>{{ field.label }}<br>{{ field }}</p>
+                                {% endfor %}
+                                <button class="btn" type="submit"
+                                >Добавить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="Order-footer printsheet-button-area">
+                    <a class="btn btn_success btn_muted Order-btnReg" href="{% url 'priceapp:printsheet_delete' %}">
+                        Очистить
+                    </a>
+                    <a class="btn btn_success Order-btnReg" href="{% url 'priceapp:printsheet_print' %}"
+                       target="_blank">
+                        Сформировать
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

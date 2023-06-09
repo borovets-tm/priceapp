@@ -1,0 +1,32 @@
+{% load static %}
+<tbody class="small-tags-layout">
+
+<tr class="small-tags-first-line">
+    <td class="small-tags-base-td" colspan="2"
+        style="font-size: calc(min(16px / {{ tag.category.name|length }} * 18, 16px));"
+    >{{ tag.category.name }}</td>
+</tr>
+
+<tr class="small-tags-second-line">
+    <td class="small-tags-base-td" colspan="2" style="font-size: calc(min(24px / {{ tag.product|length }} * 10, 24px));"
+    >{{ tag.product }}</td>
+</tr>
+
+<tr class="small-tags-third-line">
+    <td {% if tag.red_price %}
+        class="small-tags-base-td red-price"
+    {% else %}
+        class="small-tags-base-td black-price"
+    {% endif %}
+        colspan="2" style="font-size: calc(min(100px / {{ tag.price|make_list|length }} * 5, 100px));"
+    >{{ tag.price }}</td>
+</tr>
+
+<tr style="">
+    <td style="font-size: calc(min(8px / {{ tag.country|length }} * 17, 8px));"
+    >{{ tag.country }}</td>
+    {% now 'd.m.Y' as date %}
+    <td style="font-size: calc(min(8px / {{ date|length }} * 17, 8px));"
+    ><em>{{ date }}</em></td>
+</tr>
+</tbody>
