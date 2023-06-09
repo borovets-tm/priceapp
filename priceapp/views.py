@@ -112,13 +112,16 @@ class PrintSheetView(View):
                 .first()
             )
             tag = form['tag']
+            discount_type = form['discount_type']
+            name = product.name
+            if tag.size == 'small':
+                name = f'{name} {discount_type}'
             price = form['price']
             old_price = form['old_price']
-            discount_type = form['discount_type']
             red_price = form['red_price']
             PrintSheet.objects.create(
                 tag=tag,
-                product=product.name,
+                product=name,
                 category=product.category,
                 country=product.country,
                 price=price,
