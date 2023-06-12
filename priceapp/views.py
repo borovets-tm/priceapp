@@ -49,6 +49,12 @@ class PrintSheetView(View):
     :type `request`: HttpRequest
     :return: Представление возвращает объект HttpResponse.
     """
+    tag_list = (
+        {'size': 'big', 'is_discount': (False, 'false')},
+        {'size': 'big', 'is_discount': (True, 'true')},
+        {'size': 'small', 'is_discount': (False, 'false')},
+        {'size': 'small', 'is_discount': (True, 'true')},
+    )
 
     def get(self, request: HttpRequest) -> HttpResponse:
         form = PrintSheetForm()
@@ -58,16 +64,10 @@ class PrintSheetView(View):
             .select_related('tag')
             .last()
         )
-        tag_list = (
-            {'size': 'big', 'is_discount': (False, 'false')},
-            {'size': 'big', 'is_discount': (True, 'true')},
-            {'size': 'small', 'is_discount': (False, 'false')},
-            {'size': 'small', 'is_discount': (True, 'true')},
-        )
         context = {
             'form': form,
             'free_form': free_form,
-            'tag_list': tag_list,
+            'tag_list': self.tag_list,
             'last_scan': last_scan
         }
         return render(
@@ -85,7 +85,11 @@ class PrintSheetView(View):
             size = form.get('size')
             is_discount = form.get('is_discount') == 'true'
             if input_line.isdigit():
-                product = Product.objects.get(ean=input_line)
+                product = (
+                    Product.objects.filter(ean=input_line)
+                    .select_related('category', 'country')
+                    .first()
+                )
             else:
                 product = (
                     Product.objects.filter(name__iexact=input_line)
@@ -103,6 +107,24 @@ class PrintSheetView(View):
                     old_price=product.old_price,
                     red_price=product.red_price
                 )
+            else:
+                form = PrintSheetForm(request.POST.copy())
+                form.data['input_line'] = ''
+                form.errors.pop('input_line')
+                form.add_error('input_line', f'Товар {input_line}\n\n не найден!')
+                last_scan = {'tag': {'size': size, 'is_discount': is_discount}}
+                context = {
+                    'form': form,
+                    'free_form': free_form,
+                    'tag_list': self.tag_list,
+                    'last_scan': last_scan
+                }
+                return render(
+                    request,
+                    'priceapp/printsheet_form.html',
+                    context=context
+                )
+
         if free_form.is_valid():
             form = free_form.cleaned_data
             product = (

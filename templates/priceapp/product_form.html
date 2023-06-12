@@ -15,10 +15,15 @@
                             <form class="form product-create-form" method="post">
                                 {% csrf_token %}
                                 <table class="table-create-product-form">
-                                <caption>Внесите информацию о товаре</caption>
+                                    <caption>Внесите информацию о товаре</caption>
                                     {% for field in form %}
+                                        {% if field.errors %}
+                                            <tr>
+                                                <td colspan="2">{{ field.errors.as_text|lower }}</td>
+                                            </tr>
+                                        {% endif %}
                                         <tr>
-                                            <td>{{ field.label }}</td>
+                                            <td>{{ field.label|upper }}</td>
                                             <td>{{ field }}</td>
                                         </tr>
                                     {% endfor %}

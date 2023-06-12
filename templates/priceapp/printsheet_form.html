@@ -20,8 +20,12 @@
                                 <p>{{ form.input_line.label }}</p>
                                 {#                            Отсканировано: {{ last_scan }}<br>#}
                                 {% if tag.size == last_scan.tag.size and tag.is_discount.0 == last_scan.tag.is_discount %}
-                                    <p>Последний добавленный:</p>
-                                    <p>{{ last_scan.product }}</p>
+                                    {% if form.input_line.errors %}
+                                        <p>{{ form.input_line.errors.as_text|linebreaks }}</p>
+                                    {% else %}
+                                        <p>Последний добавленный:</p>
+                                        <p>{{ last_scan.product }}</p>
+                                    {% endif %}
                                     {{ form.input_line|attr:"autofocus" }}
                                 {% else %}
                                     <p>&nbsp;</p>
@@ -48,7 +52,8 @@
                                     <p>{{ field.label }}<br>{{ field }}</p>
                                 {% endfor %}
                                 <button class="btn" type="submit"
-                                >Добавить</button>
+                                >Добавить
+                                </button>
                             </form>
                         </div>
                     </div>
