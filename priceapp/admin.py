@@ -49,7 +49,7 @@ class ProductAdmin(admin.ModelAdmin):
             'description': 'Информация о категории и стране производители'
         }),
         ('Информация о цене', {
-            'fields': ('price', 'old_price'),
+            'fields': ('price', 'old_price', 'red_price'),
             'classes': ('wide',),
             'description': 'Текущая и предыдущая(если доступна, иначе 0) цена'
         })
