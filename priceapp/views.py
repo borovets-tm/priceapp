@@ -236,19 +236,26 @@ class ProductICQUpdateView(View):
             update_list = map(lambda x: [elem.strip() for elem in re.split(regex, x)], text)
             for product in update_list:
                 if len(product) == 2:
-                    product, price = product
+                    name, price = product
                     old_price = 0
                 elif len(product) == 3:
-                    product, old_price, price = product
+                    name, old_price, price = product
                 else:
-                    return redirect(reverse('priceapp:product_icq_update'))
-                product = Product.objects.filter(name=product).first()
-                UpdateProduct.objects.update_or_create(
-                    name=product.name,
-                    price=price,
-                    old_price=old_price,
-                    red_price=product.red_price
-                )
+                    continue
+                product = Product.objects.filter(name=name).first()
+                if product:
+                    UpdateProduct.objects.update_or_create(
+                        name=product.name,
+                        price=price,
+                        old_price=old_price,
+                        red_price=product.red_price
+                    )
+                else:
+                    MissingProduct.objects.update_or_create(
+                        name=name,
+                        price=price,
+                        old_price=old_price
+                    )
 
         return redirect(reverse('priceapp:product_confirm_update'))
 
@@ -294,7 +301,7 @@ class ProductConfirmUpdateView(View):
                     red_price=red_price,
                     updated_at=updated_at
                 )
-        if before_redirect_url == '/update/' and MissingProduct.objects.count() > 0:
+        if MissingProduct.objects.count() > 0:
             return redirect(reverse('priceapp:missingproduct_form'))
         return redirect(before_redirect_url)
 
