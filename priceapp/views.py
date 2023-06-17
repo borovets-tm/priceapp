@@ -1,6 +1,7 @@
 import re
 from _csv import reader
 
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -256,8 +257,9 @@ class ProductICQUpdateView(View):
                         price=price,
                         old_price=old_price
                     )
-
-        return redirect(reverse('priceapp:product_confirm_update'))
+        if UpdateProduct.objects.exists():
+            return redirect(reverse('priceapp:product_confirm_update'))
+        return redirect(reverse('priceapp:missingproduct_form'))
 
 
 class ProductConfirmUpdateView(View):
@@ -301,7 +303,7 @@ class ProductConfirmUpdateView(View):
                     red_price=red_price,
                     updated_at=updated_at
                 )
-        if MissingProduct.objects.count() > 0:
+        if MissingProduct.objects.exists():
             return redirect(reverse('priceapp:missingproduct_form'))
         return redirect(before_redirect_url)
 
@@ -346,10 +348,12 @@ class ProductUpdateView(View):
                 else:
                     MissingProduct.objects.update_or_create(sku=row[0], price=row[1], old_price=row[2])
 
-        return redirect(reverse('priceapp:product_confirm_update'))
+        if UpdateProduct.objects.exists():
+            return redirect(reverse('priceapp:product_confirm_update'))
+        return redirect(reverse('priceapp:missingproduct_form'))
 
 
-class MissingProductFormView(View):
+class MissingProductFormView(UserPassesTestMixin, View):
     """
     Представление отображает форму для создания отсутствующих продуктов и обрабатывает отправку данных формы путем
     создания новых объектов Product.
@@ -360,6 +364,9 @@ class MissingProductFormView(View):
     :return: Метод `post` возвращает ответ перенаправления HTTP на URL-адрес, указанный функцией `reverse`, с аргументом
     `'priceapp:printsheet_delete'`.
     """
+
+    def test_func(self):
+        return MissingProduct.objects.exists()
 
     def get(self, request: HttpRequest) -> HttpResponse:
         formset = MissingProductFormSet()
@@ -378,7 +385,7 @@ class MissingProductFormView(View):
             if form.is_valid():
                 form = form.cleaned_data
                 form.pop('id')
-                Product.objects.create(**form)
+                Product.objects.update_or_create(**form)
 
         return redirect(reverse('priceapp:printsheet_delete'))
 
