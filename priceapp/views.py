@@ -368,6 +368,12 @@ class MissingProductFormView(UserPassesTestMixin, View):
     def test_func(self):
         return MissingProduct.objects.exists()
 
+    def dispatch(self, request, *args, **kwargs):
+        user_test_result = self.get_test_func()()
+        if not user_test_result:
+            return redirect(before_redirect_url)
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request: HttpRequest) -> HttpResponse:
         formset = MissingProductFormSet()
         context = {
