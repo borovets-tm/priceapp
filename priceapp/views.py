@@ -2,6 +2,7 @@ import re
 from _csv import reader
 
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -20,6 +21,8 @@ from .forms import (
 )
 
 before_redirect_url: str = ''
+last_scan: dict = {'tag': {'size': 'big', 'is_discount': False}, 'product': 'Список пуст'}
+missing_products_flag: bool = False
 
 
 class PrintSheetDelete(View):
@@ -60,11 +63,6 @@ class PrintSheetView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         form = PrintSheetForm()
         free_form = PrintSheetFreeForm()
-        last_scan = (
-            PrintSheet.objects
-            .select_related('tag')
-            .last()
-        )
         context = {
             'form': form,
             'free_form': free_form,
@@ -78,27 +76,23 @@ class PrintSheetView(View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        global last_scan
         form = PrintSheetForm(request.POST)
         free_form = PrintSheetFreeForm(request.POST)
+        tag = last_scan['tag']
         if form.is_valid():
             form = form.cleaned_data
             input_line = form.get('input_line')
             size = form.get('size')
             is_discount = form.get('is_discount') == 'true'
-            if input_line.isdigit():
-                product = (
-                    Product.objects.filter(ean=input_line)
-                    .select_related('category', 'country')
-                    .first()
-                )
-            else:
-                product = (
-                    Product.objects.filter(name__iexact=input_line)
-                    .select_related('category', 'country')
-                    .first()
-                )
+            tag = Tag.objects.get(size=size, is_discount=is_discount)
+            product = (
+                Product.objects.filter(Q(ean=input_line) | Q(name__iexact=input_line))
+                .select_related('category', 'country')
+                .first()
+            )
             if product:
-                tag = Tag.objects.get(size=size, is_discount=is_discount)
+                last_scan['product'] = product.name
                 PrintSheet.objects.create(
                     tag=tag,
                     product=product.name,
@@ -113,7 +107,6 @@ class PrintSheetView(View):
                 form.data['input_line'] = ''
                 form.errors.pop('input_line')
                 form.add_error('input_line', f'Товар {input_line}\n\n не найден!')
-                last_scan = {'tag': {'size': size, 'is_discount': is_discount}}
                 context = {
                     'form': form,
                     'free_form': free_form,
@@ -139,6 +132,7 @@ class PrintSheetView(View):
             name = product.name
             if tag.size == 'small':
                 name = f'{name} {discount_type}'
+            last_scan['product'] = name
             price = form['price']
             old_price = form['old_price']
             red_price = form['red_price']
@@ -152,6 +146,7 @@ class PrintSheetView(View):
                 red_price=red_price,
                 discount_type=discount_type
             )
+        last_scan['tag'] = tag
 
         return redirect(reverse('priceapp:printsheet_create'))
 
@@ -174,7 +169,7 @@ class PrintSheetList(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         max_height = 290
         max_width = 180
-        printsheet_list = PrintSheet.objects.all().select_related('tag')
+        printsheet_list = PrintSheet.objects.select_related('tag')
         size_list = ['big', 'small']
         page_list = [[]]
         height = 0
@@ -215,7 +210,6 @@ class ProductICQUpdateView(View):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        UpdateProduct.objects.all().delete()
         form = ProductICQUpdateForm()
         context = {
             'form': form
@@ -227,9 +221,11 @@ class ProductICQUpdateView(View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        global before_redirect_url
+        global before_redirect_url, missing_products_flag
         before_redirect_url = request.path
         form = ProductICQUpdateForm(request.POST)
+        update_product_list = []
+        missing_product_list = []
         if form.is_valid():
             form = form.cleaned_data
             text = form['text'].split('\r\n')
@@ -245,19 +241,27 @@ class ProductICQUpdateView(View):
                     continue
                 product = Product.objects.filter(name=name).first()
                 if product:
-                    UpdateProduct.objects.update_or_create(
-                        name=product.name,
-                        price=price,
-                        old_price=old_price,
-                        red_price=product.red_price
+                    update_product_list.append(
+                        UpdateProduct(
+                            name=product.name,
+                            price=price,
+                            old_price=old_price,
+                            red_price=product.red_price
+                        )
                     )
                 else:
-                    MissingProduct.objects.update_or_create(
-                        name=name,
-                        price=price,
-                        old_price=old_price
+                    missing_product_list.append(
+                        MissingProduct(
+                            name=name,
+                            price=price,
+                            old_price=old_price
+                        )
                     )
-        if UpdateProduct.objects.exists():
+        if missing_product_list:
+            MissingProduct.objects.bulk_create(missing_product_list)
+            missing_products_flag = True
+        if update_product_list:
+            UpdateProduct.objects.bulk_create(update_product_list)
             return redirect(reverse('priceapp:product_confirm_update'))
         return redirect(reverse('priceapp:missingproduct_form'))
 
@@ -303,7 +307,8 @@ class ProductConfirmUpdateView(View):
                     red_price=red_price,
                     updated_at=updated_at
                 )
-        if MissingProduct.objects.exists():
+        UpdateProduct.objects.all().delete()
+        if missing_products_flag:
             return redirect(reverse('priceapp:missingproduct_form'))
         return redirect(before_redirect_url)
 
@@ -321,7 +326,6 @@ class ProductUpdateView(View):
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        UpdateProduct.objects.all().delete()
         form = FileDownloadForm()
         context = {
             'form': form,
@@ -333,9 +337,12 @@ class ProductUpdateView(View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        global before_redirect_url
+        global before_redirect_url, missing_products_flag
         before_redirect_url = request.path
         form = FileDownloadForm(request.POST, request.FILES)
+        update_product_list = []
+        product_name_list = []
+        missing_product_list = []
         if form.is_valid():
             file = form.cleaned_data['file'].read().strip()
             price_str = file.decode('utf-8').split('\n')[1:]
@@ -344,11 +351,19 @@ class ProductUpdateView(View):
                 product = Product.objects.filter(sku=row[0])
                 if product:
                     product = product.first()
-                    UpdateProduct.objects.update_or_create(name=product.name, price=row[1], old_price=row[2])
+                    update_product = UpdateProduct(name=product.name, price=row[1], old_price=row[2])
+                    if update_product.name not in product_name_list:
+                        update_product_list.append(update_product)
+                        product_name_list.append(product.name)
                 else:
-                    MissingProduct.objects.update_or_create(sku=row[0], price=row[1], old_price=row[2])
-
-        if UpdateProduct.objects.exists():
+                    missing_product_list.append(
+                        MissingProduct(sku=row[0], price=row[1], old_price=row[2])
+                    )
+        if missing_product_list:
+            MissingProduct.objects.bulk_create(missing_product_list)
+            missing_products_flag = True
+        if update_product_list:
+            UpdateProduct.objects.bulk_create(update_product_list)
             return redirect(reverse('priceapp:product_confirm_update'))
         return redirect(reverse('priceapp:missingproduct_form'))
 
@@ -387,11 +402,13 @@ class MissingProductFormView(UserPassesTestMixin, View):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         formset = MissingProductFormSet(request.POST)
+        product_list = []
         for form in formset:
             if form.is_valid():
                 form = form.cleaned_data
                 form.pop('id')
-                Product.objects.update_or_create(**form)
+                product_list.append(Product(**form))
+        Product.objects.bulk_create(product_list)
 
         return redirect(reverse('priceapp:printsheet_delete'))
 

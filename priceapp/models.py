@@ -40,7 +40,8 @@ class Product(models.Model):
         blank=True,
         help_text='IERM7.WW2'
     )
-    ean = models.IntegerField(
+    ean = models.CharField(
+        max_length=13,
         unique=True,
         verbose_name='штрихкод',
         help_text='4548736081680'
@@ -229,7 +230,8 @@ class MissingProduct(models.Model):
         blank=True,
         help_text='IERM7.WW2'
     )
-    ean = models.IntegerField(
+    ean = models.CharField(
+        max_length=13,
         unique=True,
         null=True,
         blank=True,
