@@ -2,13 +2,13 @@
 <tbody class="big-tags-layout">
 
 <tr class="big-first-line">
-    <td colspan="2" style="font-size: calc(min(25px / {{ tag.category.name|length }} * 24, 25px));"
-    >{{ tag.category.name }}</td>
+    <td colspan="2" style="font-size: calc(min(25px / {{ tag.category|length }} * 24, 25px));"
+    >{{ tag.category }}</td>
 </tr>
 
 <tr class="big-second-line">
-    <td class="big-product-name" style="font-size: calc(min(40px / {{ tag.product|length }} * 14, 40px))"
-        colspan="2">{{ tag.product }}</td>
+    <td class="big-product-name" style="font-size: calc(min(40px / {{ tag.name|length }} * 14, 40px))"
+        colspan="2">{{ tag.name }}</td>
 </tr>
 
 <tr class="big-third-line">
@@ -22,8 +22,8 @@
 </tr>
 
 <tr class="big-fourth-line">
-    <td class="big-country" style="font-size: calc(min(12px / {{ tag.country.name|length }} * 26, 12px));"
-    >{{ tag.country.name }}</td>
+    <td class="big-country" style="font-size: calc(min(12px / {{ tag.country|length }} * 26, 12px));"
+    >{{ tag.country }}</td>
     {% now 'd.m.Y' as date %}
     <td class="big-date" style="font-size: calc(min(12px / {{ date|length }} * 26, 12px));"
     ><em>{{ date }}</em></td>

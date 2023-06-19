@@ -44,7 +44,12 @@
                 </div>
                 <div class="add-custom-tag">
                     <div class="wrap wrap-add-custom-tag">
-                        <h6 class="Middle-title">Добавить ценник по уценки:</h6>
+                        <h6 class="Middle-title">Добавить ценник по уценки: <em>
+                            {% if 'Товар' in free_form.name.errors.as_text %}
+                                {{ free_form.name.errors.as_text }}
+                            {% endif %}
+                        </em>
+                        </h6>
                         <div class="Middle-header Middle-header-free-form">
                             <form class="row free-form" id="free_form" method="post">
                                 {% csrf_token %}

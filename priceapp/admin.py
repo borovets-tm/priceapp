@@ -11,11 +11,11 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(PrintSheet)
 class PrintSheetAdmin(admin.ModelAdmin):
-    list_display = 'printed_at', 'product', 'tag', 'discount_type_view'
+    list_display = 'printed_at', 'name', 'tag', 'discount_type_view'
     list_display_links = 'printed_at',
     fieldsets = (
         (None, {
-            'fields': ('category', 'country', 'product', )
+            'fields': ('category', 'country', 'name', )
         }),
         ('Информация о цене', {
             'fields': ('price', 'old_price', 'red_price', 'discount_type')

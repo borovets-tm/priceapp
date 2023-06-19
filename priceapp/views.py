@@ -10,7 +10,13 @@ from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView
 
-from .models import PrintSheet, Product, Tag, UpdateProduct, MissingProduct
+from .models import (
+    PrintSheet,
+    Product,
+    Tag,
+    UpdateProduct,
+    MissingProduct, Category, Country,
+)
 from .forms import (
     PrintSheetForm,
     PrintSheetFreeForm,
@@ -21,38 +27,46 @@ from .forms import (
 )
 
 before_redirect_url: str = ''
-last_scan: dict = {'tag': {'size': 'big', 'is_discount': False}, 'product': 'Список пуст'}
+last_scan: dict = {
+    'tag': {
+        'size': 'big',
+        'is_discount': False
+    },
+    'product': 'Список пуст'
+}
 missing_products_flag: bool = False
 
 
 class PrintSheetDelete(View):
-    """
-    Представление удаляет все экземпляры моделей PrintSheet, UpdateProduct и MissingProduct и перенаправляет
-    представление printsheet_create.
-
-    :param `request`: Параметр запроса — это экземпляр класса HttpRequest, представляющий HTTP-запрос, сделанный клиентом
-    серверу. Он содержит информацию о запросе, такую как используемый метод HTTP, запрошенный URL-адрес и любые данные,
-    отправленные в запросе.
-    :type `request`: HttpRequest
-    :return: ответ перенаправления HTTP на URL-адрес, указанный именем представления «printsheet_create» в пространстве
-    имен «priceapp».
-    """
+    """Стартовое представление которое очищает таблицы \
+    `Ценники для печати`, `Обновляемые товары` и `Ненайденные товары`, \
+    после чего перенаправляет на страницу формирования печати ценников."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос, очищает таблиц \
+        и перенаправляет на страницу формирования печати.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
+        global last_scan
         PrintSheet.objects.all().delete()
         UpdateProduct.objects.all().delete()
         MissingProduct.objects.all().delete()
+        last_scan = {
+            'tag': {
+                'size': 'big',
+                'is_discount': False
+            },
+            'product': 'Список пуст'
+        }
         return redirect(reverse('priceapp:printsheet_create'))
 
 
 class PrintSheetView(View):
-    """
-    Представление отображает форму для сканирования товаров и добавления новых товаров в список для печати ценников.
+    """Представление формирует список ценников для печати."""
 
-    :param `request`: Объект HTTP-запроса, содержащий метаданные о выполняемом запросе.
-    :type `request`: HttpRequest
-    :return: Представление возвращает объект HttpResponse.
-    """
     tag_list = (
         {'size': 'big', 'is_discount': (False, 'false')},
         {'size': 'big', 'is_discount': (True, 'true')},
@@ -61,6 +75,14 @@ class PrintSheetView(View):
     )
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос, использует две формы \
+        для обработки: форма поиска по Товарам и свободная \
+        форма для формирования ценников по уценки.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         form = PrintSheetForm()
         free_form = PrintSheetFreeForm()
         context = {
@@ -76,100 +98,123 @@ class PrintSheetView(View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод формирует список ценников для печати, \
+        обрабатывая для этого формы.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         global last_scan
+        error_flag = ''
         form = PrintSheetForm(request.POST)
         free_form = PrintSheetFreeForm(request.POST)
         tag = last_scan['tag']
+        discount_type = 'Акция !!!'
         if form.is_valid():
             form = form.cleaned_data
-            input_line = form.get('input_line')
-            size = form.get('size')
-            is_discount = form.get('is_discount') == 'true'
+            input_line = form['input_line']
+            size = form['size']
+            is_discount = form['is_discount'] == 'true'
             tag = Tag.objects.get(size=size, is_discount=is_discount)
             product = (
-                Product.objects.filter(Q(ean=input_line) | Q(name__iexact=input_line))
-                .select_related('category', 'country')
+                Product.objects.filter(
+                    Q(ean=input_line) | Q(name__iexact=input_line)
+                )
+                .values(
+                    'name',
+                    'category',
+                    'country',
+                    'price',
+                    'old_price',
+                    'red_price'
+                )
                 .first()
             )
-            if product:
-                last_scan['product'] = product.name
-                PrintSheet.objects.create(
-                    tag=tag,
-                    product=product.name,
-                    category=product.category,
-                    country=product.country,
-                    price=product.price,
-                    old_price=product.old_price,
-                    red_price=product.red_price
-                )
-            else:
-                form = PrintSheetForm(request.POST.copy())
-                form.data['input_line'] = ''
-                form.errors.pop('input_line')
-                form.add_error('input_line', f'Товар {input_line}\n\n не найден!')
-                context = {
-                    'form': form,
-                    'free_form': free_form,
-                    'tag_list': self.tag_list,
-                    'last_scan': last_scan
-                }
-                return render(
-                    request,
-                    'priceapp/printsheet_form.html',
-                    context=context
-                )
+            if not product:
+                error_flag = input_line
 
         if free_form.is_valid():
             form = free_form.cleaned_data
+            tag = form['tag']
             product = (
                 Product.objects
                 .filter(name__iexact=form['name'])
-                .select_related('country', 'category')
+                .values(
+                    'name',
+                    'category',
+                    'country',
+                    'price',
+                    'old_price',
+                    'red_price'
+                )
                 .first()
             )
-            tag = form['tag']
-            discount_type = form['discount_type']
-            name = product.name
-            if tag.size == 'small':
-                name = f'{name} {discount_type}'
-            last_scan['product'] = name
-            price = form['price']
-            old_price = form['old_price']
-            red_price = form['red_price']
+            if product:
+                discount_type = form['discount_type']
+                name = product['name']
+                if tag.size == 'small':
+                    product['name'] = f'{name} {discount_type}'
+                product['price'] = form['price']
+                product['old_price'] = form['old_price']
+                product['red_price'] = form['red_price']
+            else:
+                error_flag = form['name']
+        last_scan['tag'] = tag
+        if error_flag:
+            form = PrintSheetForm(request.POST.copy())
+            form.data['input_line'] = ''
+            form.errors.pop('input_line')
+            if free_form.is_valid():
+                free_form.add_error('name', f'Товар {error_flag} не найден!')
+            else:
+                form.add_error('input_line', f'Товар {error_flag}\n\n не найден!')
+            context = {
+                'form': form,
+                'free_form': free_form,
+                'tag_list': self.tag_list,
+                'last_scan': last_scan
+            }
+            return render(
+                request,
+                'priceapp/printsheet_form.html',
+                context=context
+            )
+        else:
+            last_scan['product'] = product['name']
+            product['category'] = (
+                Category.objects.only('name')
+                .get(pk=product['category'])
+                .name
+            )
+            product['country'] = (
+                Country.objects.only('name')
+                .get(pk=product['country'])
+                .name
+            )
             PrintSheet.objects.create(
                 tag=tag,
-                product=name,
-                category=product.category,
-                country=product.country,
-                price=price,
-                old_price=old_price,
-                red_price=red_price,
-                discount_type=discount_type
+                discount_type=discount_type,
+                **product
             )
-        last_scan['tag'] = tag
 
         return redirect(reverse('priceapp:printsheet_create'))
 
 
 class PrintSheetList(View):
-    """
-    Представление создает список ценников для печати на основе их размера и упорядочивает их на страницах, разбивая на
-    листы форматом А4.
-
-    :param `request`: Параметр запроса — это экземпляр класса HttpRequest, представляющий HTTP-запрос, сделанный клиентом
-    серверу. Он содержит информацию о запросе, такую как используемый метод HTTP, запрошенный URL-адрес и любые данные,
-    отправленные в запросе. Представление использует этот параметр для генерации соответствующего ответа.
-    :type `request`: HttpRequest
-    :return: Функция `PrintSheetList` возвращает ответ HTTP, который отображает шаблон с именем
-    `'priceapp/print_tags.html'`. Контекст, передаваемый шаблону, включает в себя список списков с именем page_list,
-    который содержит объекты PrintSheet, разделенные для печати и организованные на странице в зависимости от
-    их ширины и высоты.
-    """
+    """Представление формирует лист печати ценников."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос, проходит по списку \
+        ценников для печати и формирует листы размером A4.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         max_height = 290
         max_width = 180
-        printsheet_list = PrintSheet.objects.select_related('tag')
+        printsheet_list = PrintSheet.objects.all()
         size_list = ['big', 'small']
         page_list = [[]]
         height = 0
@@ -196,20 +241,20 @@ class PrintSheetList(View):
 
 
 class ProductICQUpdateView(View):
-    """
-    Представление обрабатывает обновление цен на продукты полученные в виде текста и перенаправляет на страницу
-    подтверждения.
-
-    :param `request`: Параметр запроса — это экземпляр класса HttpRequest, представляющий входящий HTTP-запрос от
-    клиента. Он содержит информацию о запросе, такую как метод HTTP, заголовки и тело. Представление использует этот
-    параметр для обработки запроса и создания соответствующего ответа.
-    :type `request`: HttpRequest
-    :return: Если форма действительна, представление перенаправляется на URL-адрес, указанный в функции «reverse» с
-    именем «priceapp:product_confirm_update». Если форма недействительна, представление отображает шаблон
-    `priceapp/product_icq_update.html` с контекстом формы.
-    """
+    """Представление обрабатывает обновление цен по \
+    полученной информации от руководства через ICQ."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос. В начале обработки \
+        происходит удаление всех объектов в Обновляемых \
+        товарах и в Ненайденных товарах.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
+        UpdateProduct.objects.all().delete()
+        MissingProduct.objects.all().delete()
         form = ProductICQUpdateForm()
         context = {
             'form': form
@@ -221,6 +266,15 @@ class ProductICQUpdateView(View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает post запрос. Из полученного текста \
+        выделяются строки с товаром и новой ценой и формируются \
+        два списка: Обновляемые товары и Ненайденные в базе \
+        товары.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         global before_redirect_url, missing_products_flag
         before_redirect_url = request.path
         form = ProductICQUpdateForm(request.POST)
@@ -266,66 +320,21 @@ class ProductICQUpdateView(View):
         return redirect(reverse('priceapp:missingproduct_form'))
 
 
-class ProductConfirmUpdateView(View):
-    """
-    Представление обновляет информацию о продукте после подтверждения пользователем и перенаправляет на указанный
-    URL-адрес.
-
-    :param `request`: Параметр запроса — это экземпляр класса HttpRequest, представляющий HTTP-запрос, полученный
-    Django. Он содержит информацию о запросе, такую как метод HTTP (GET, POST и т. д.), заголовки и любые данные,
-    которые были отправлены с запросом.
-    :type `request`: HttpRequest
-    :return: Представление возвращает ответ HTTP, либо перенаправление на URL-адрес, либо отображаемый HTML-шаблон с
-    контекстом, содержащим набор форм. Конкретный URL-адрес для перенаправления зависит от значения переменной
-    `before_redirect_url`, которая не показана во фрагменте кода.
-    """
-
-    def get(self, request: HttpRequest) -> HttpResponse:
-        formset = ProductConfirmUpdateSet()
-        context = {
-            'formset': formset
-        }
-        return render(
-            request,
-            'priceapp/product_confirm_update.html',
-            context=context
-        )
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        formset = ProductConfirmUpdateSet(request.POST)
-        for form in formset:
-            if form.is_valid():
-                form = form.cleaned_data
-                name = form['name']
-                price = form['price']
-                old_price = form['old_price']
-                red_price = form['red_price']
-                updated_at = form['id'].update_at
-                Product.objects.filter(name=name).update(
-                    price=price,
-                    old_price=old_price,
-                    red_price=red_price,
-                    updated_at=updated_at
-                )
-        UpdateProduct.objects.all().delete()
-        if missing_products_flag:
-            return redirect(reverse('priceapp:missingproduct_form'))
-        return redirect(before_redirect_url)
-
-
 class ProductUpdateView(View):
-    """
-    Представление обрабатывает обновление цен на продукты из файла CSV и перенаправляет на страницу подтверждения.
-
-    :param `request`: Параметр запроса — это экземпляр класса HttpRequest, представляющий входящий HTTP-запрос от клиента.
-    Он содержит информацию о запросе, такую как метод HTTP, заголовки и тело. Представление использует этот параметр для
-    обработки запроса и создания соответствующего ответа.
-    :type `request`: HttpRequest
-    :return: Представление возвращает HTTP-перенаправление на URL-адрес, указанный обратным поиском URL-адреса
-    product_confirm_update.
-    """
+    """Представление обновляет товары из файла при поступлении \
+    новой партии товара. Информацию передает руководство."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос. В начале обработки \
+        происходит удаление всех объектов в Обновляемых \
+        товарах и в Ненайденных товарах.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
+        UpdateProduct.objects.all().delete()
+        MissingProduct.objects.all().delete()
         form = FileDownloadForm()
         context = {
             'form': form,
@@ -337,6 +346,15 @@ class ProductUpdateView(View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает post запрос. Из полученного файла \
+        выделяются строки с товаром и информацией о цене для \
+        формирования списков Обновляемых товаров и Ненайденных \
+        в базе товаров.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         global before_redirect_url, missing_products_flag
         before_redirect_url = request.path
         form = FileDownloadForm(request.POST, request.FILES)
@@ -368,28 +386,107 @@ class ProductUpdateView(View):
         return redirect(reverse('priceapp:missingproduct_form'))
 
 
+class ProductConfirmUpdateView(View):
+    """Представление обрабатывает подтверждение обновления цен."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос и передает список в виде \
+        формы для проверки корректности данных.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
+        formset = ProductConfirmUpdateSet()
+        context = {
+            'formset': formset
+        }
+        return render(
+            request,
+            'priceapp/product_confirm_update.html',
+            context=context
+        )
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает post запрос. Проходит по всему \
+        списку полученных форм и формирует список для \
+        массового обновления.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
+        formset = ProductConfirmUpdateSet(request.POST)
+        name_list: list = []
+        data_list: dict = {}
+        for form in formset:
+            if form.is_valid():
+                form = form.cleaned_data
+                name = form['name']
+                name_list.append(name)
+                data_list[name] = {
+                    'price': form['price'],
+                    'old_price': form['old_price'],
+                    'red_price': form['red_price'],
+                    'updated_at': form['id'].update_at
+                }
+        product_list = Product.objects.filter(name__in=name_list)
+        for product in product_list:
+            product.price = data_list[product.name]['price']
+            product.old_price = data_list[product.name]['old_price']
+            product.red_price = data_list[product.name]['red_price']
+            product.updated_at = data_list[product.name]['updated_at']
+        Product.objects.bulk_update(
+            product_list,
+            [
+                'price',
+                'old_price',
+                'red_price',
+                'updated_at'
+            ]
+        )
+        UpdateProduct.objects.all().delete()
+        if missing_products_flag:
+            return redirect(reverse('priceapp:missingproduct_form'))
+        return redirect(before_redirect_url)
+
+
 class MissingProductFormView(UserPassesTestMixin, View):
-    """
-    Представление отображает форму для создания отсутствующих продуктов и обрабатывает отправку данных формы путем
-    создания новых объектов Product.
+    """Представление служит для добавления товаров, которые \
+    не найдены в базе при обновлении."""
 
-    :param `request`: Объект HTTP-запроса, который содержит информацию о текущем запросе, такую как пользовательский
-    агент, запрошенный URL-адрес и любые отправленные данные.
-    :type `request`: HttpRequest
-    :return: Метод `post` возвращает ответ перенаправления HTTP на URL-адрес, указанный функцией `reverse`, с аргументом
-    `'priceapp:printsheet_delete'`.
-    """
+    def test_func(self) -> bool:
+        """
+        Проверяет наличие объектов в списке Ненайденых товаров.
 
-    def test_func(self):
+        :return: bool.
+        """
         return MissingProduct.objects.exists()
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs) -> HttpResponse:
+        """
+        При отсутствии Ненайденных товаров вернет пользователя на \
+        страницу обновления.
+
+        :param request: HttpRequest.
+        :param args: Any.
+        :param kwargs: Any.
+        :return: HttpResponse.
+        """
         user_test_result = self.get_test_func()()
         if not user_test_result:
             return redirect(before_redirect_url)
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает get запрос. Формирует список \
+        Ненайденных при обновлении товаров для заполнения \
+        и создания новых Product.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         formset = MissingProductFormSet()
         context = {
             'formset': formset
@@ -401,6 +498,14 @@ class MissingProductFormView(UserPassesTestMixin, View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
+        """
+        Метод обрабатывает post запрос. Проверяет данные из \
+        списка форм и производит массовое добавление новых \
+        записей в Товары.
+
+        :param request: HttpRequest.
+        :return: HttpResponse.
+        """
         formset = MissingProductFormSet(request.POST)
         product_list = []
         for form in formset:
@@ -409,12 +514,14 @@ class MissingProductFormView(UserPassesTestMixin, View):
                 form.pop('id')
                 product_list.append(Product(**form))
         Product.objects.bulk_create(product_list)
-
+        MissingProduct.objects.all().delete()
         return redirect(reverse('priceapp:printsheet_delete'))
 
 
-# Приведенный ниже код определяет класс ProductCreateView, который создает новые объекты Product.
 class ProductCreateView(CreateView):
+    """Представление основано на CreateView для создания \
+    новых товаров"""
+
     model = Product
     fields = 'sku', 'ean', 'name', 'category', 'country', 'price', 'old_price', 'red_price'
     success_url = reverse_lazy('priceapp:printsheet_delete')

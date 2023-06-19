@@ -3145,6 +3145,7 @@ button.link {
 .small-tags-layout {
     box-shadow: 0 0 0 0.1mm gray;
     width: 45mm;
+    max-width: 45mm;
     height: 33mm;
     table-layout: fixed;
     line-height: 0;
@@ -3213,13 +3214,13 @@ button.link {
 }
 
 .small-tags-country {
-    /*padding: 0 0 0 5px;*/
+    padding: 5px 0 0 5px;
     text-align: left;
 }
 
 .small-tags-date {
     text-align: right;
-    /*padding: 0 5px 0 0;*/
+    padding: 5px 5px 0 0;
 }
 
 .small-tags-price-td {

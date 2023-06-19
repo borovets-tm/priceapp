@@ -138,7 +138,7 @@ class PrintSheet(models.Model):
         verbose_name='причина скидки',
         default='Акция !!!'
     )
-    product = models.CharField(
+    name = models.CharField(
         max_length=100,
         verbose_name='наименование',
         help_text='WF-1000XM4'
@@ -161,15 +161,13 @@ class PrintSheet(models.Model):
         default=False,
         verbose_name='красная цена'
     )
-    country = models.ForeignKey(
-        Country,
-        on_delete=models.PROTECT,
+    country = models.CharField(
+        max_length=30,
         verbose_name='страна',
         help_text='Малайзия'
     )
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.PROTECT,
+    category = models.CharField(
+        max_length=40,
         verbose_name='категория',
         help_text='BT наушники'
     )

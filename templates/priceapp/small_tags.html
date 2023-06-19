@@ -3,13 +3,13 @@
 
 <tr class="small-tags-first-line">
     <td class="small-tags-base-td" colspan="2"
-        style="font-size: calc(min(16px / {{ tag.category.name|length }} * 18, 16px));"
-    >{{ tag.category.name }}</td>
+        style="font-size: calc(min(16px / {{ tag.category|length }} * 18, 16px));"
+    >{{ tag.category }}</td>
 </tr>
 
 <tr class="small-tags-second-line">
-    <td class="small-tags-base-td" colspan="2" style="font-size: calc(min(24px / {{ tag.product|length }} * 10, 24px));"
-    >{{ tag.product }}</td>
+    <td class="small-tags-base-td" colspan="2" style="font-size: calc(min(24px / {{ tag.name|length }} * 10, 24px));"
+    >{{ tag.name }}</td>
 </tr>
 
 <tr class="small-tags-third-line">
@@ -23,10 +23,10 @@
 </tr>
 
 <tr style="">
-    <td style="font-size: calc(min(8px / {{ tag.country|length }} * 17, 8px));"
+    <td class="small-tags-country" style="font-size: calc(min(8px / {{ tag.country|length }} * 17, 8px));"
     >{{ tag.country }}</td>
     {% now 'd.m.Y' as date %}
-    <td style="font-size: calc(min(8px / {{ date|length }} * 17, 8px));"
+    <td class="small-tags-date" style="font-size: calc(min(8px / {{ date|length }} * 17, 8px));"
     ><em>{{ date }}</em></td>
 </tr>
 </tbody>
