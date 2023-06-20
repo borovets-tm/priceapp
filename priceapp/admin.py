@@ -39,13 +39,14 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = 'sku', 'ean', 'name', 'category', 'price', 'red_price', 'updated_at'
     list_display_links = 'sku', 'ean', 'name'
     search_fields = 'sku', 'ean', 'name'
+    list_filter = 'category',
     fieldsets = (
         (None, {
             'fields': ('sku', 'ean', 'name'),
         }),
         ('Дополнительная информация', {
             'fields': ('category', 'country'),
-            'classes': ('wide', 'collapse'),
+            'classes': ('wide',),
             'description': 'Информация о категории и стране производители'
         }),
         ('Информация о цене', {

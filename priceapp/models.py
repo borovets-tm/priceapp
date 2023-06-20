@@ -36,18 +36,21 @@ class Category(models.Model):
 class Product(models.Model):
     sku = models.CharField(
         max_length=50,
+        db_index=True,
         null=True,
         blank=True,
         help_text='IERM7.WW2'
     )
     ean = models.CharField(
         max_length=13,
+        db_index=True,
         unique=True,
         verbose_name='штрихкод',
         help_text='4548736081680'
     )
     name = models.CharField(
         max_length=100,
+        db_index=True,
         verbose_name='наименование',
         help_text='IER-M7'
     )
@@ -184,7 +187,7 @@ class PrintSheet(models.Model):
         verbose_name_plural = 'ценники для печати'
 
     def __str__(self):
-        return f'{self.tag} {self.product!r}'
+        return f'{self.tag} {self.name!r}'
 
 
 class UpdateProduct(models.Model):
