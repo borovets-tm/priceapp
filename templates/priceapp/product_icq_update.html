@@ -16,14 +16,16 @@
                                 <form class="form" method="post">
                                     {% csrf_token %}
                                     {{ form.as_p }}
-                                    <button class="btn btn_success Order-btnReg" type="submit">
+                                    <button class="btn btn_success Order-btnReg"
+                                            type="submit">
                                         Обновить
                                     </button>
                                 </form>
                             </div>
                             <table class="Card table-instruction-by-update-price">
                                 <tr>
-                                    <td colspan="2" class="row-instruction-by-update-price">
+                                    <td colspan="2"
+                                        class="row-instruction-by-update-price">
                                         <h2>ИНСТРУКЦИЯ</h2>
                                     </td>
                                 </tr>
@@ -31,18 +33,22 @@
                                     <td class="row-instruction-by-update-price">
                                         1. Скопируйте присланный текст из ICQ.
                                         <div class="Card-picture">
-                                            <img src="{% static 'steps/step-1.jpg' %}" alt="step-1.jpg"/>
+                                            <img src="{% static 'steps/step-1.jpg' %}"
+                                                 alt="step-1.jpg"/>
                                         </div>
                                         <br>
                                         2. Вставьте текст в поле.
                                         <div class="Card-picture">
-                                            <img src="{% static 'steps/step-2.jpg' %}" alt="step-2.jpg"/>
+                                            <img src="{% static 'steps/step-2.jpg' %}"
+                                                 alt="step-2.jpg"/>
                                         </div>
                                     </td>
                                     <td class="row-instruction-by-update-price">
-                                        3. Удалите пробелы между цифрами в ценах, а также комментарии в тексте.
+                                        3. Удалите пробелы между цифрами в
+                                        ценах, а также комментарии в тексте.
                                         <div class="Card-picture">
-                                            <img src="{% static 'steps/step-3.jpg' %}" alt="step-3.jpg"/>
+                                            <img src="{% static 'steps/step-3.jpg' %}"
+                                                 alt="step-3.jpg"/>
                                         </div>
                                         <br>
                                         4. Нажмите на кнопку обновить.

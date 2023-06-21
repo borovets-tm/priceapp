@@ -4,7 +4,8 @@
 {% block page_content %}
     <div>
         <div class="wrap">
-            <form class="Section-content" id="file" method="post" enctype="multipart/form-data">
+            <form class="Section-content" id="file" method="post"
+                  enctype="multipart/form-data">
                 <div class="Order-block Order-block_OPEN" id="login">
                     <header class="Section-header Section-header_sm">
                         <h2 class="Section-title">
@@ -13,18 +14,16 @@
                     </header>
                     <div class="Cards" style="width: 100%">
                         {% csrf_token %}
-                        <h4>Скачайте и заполните файл по ссылке: <a class="btn btn_success button-download"
-                                                                    href="{% static 'product_update.csv' %}">СКАЧАТЬ</a>
+                        <h4>Скачайте и заполните файл по ссылке: <a
+                                class="btn btn_success button-download"
+                                href="{% static 'product_update.csv' %}">СКАЧАТЬ</a>
                         </h4>
                         <div class="form Cart" style="margin-left: 10px">
                             Загрузите заполненный файл:
                             <div>
                                 {{ form.file|attr:'class:btn btn_success Order-btnReg button-download-form' }}
-                                {#	                            <a class="btn btn_success btn_muted Order-btnReg" style="width: 20%; margin-top: 0; margin-left: 5px"#}
-                                {#                                href="{% url 'instruction_products_receipt' %}" target="_blank">#}
-                                {#		                            Инструкция#}
-                                {#		                        </a>#}
-                                <button class="btn btn_success Order-btnReg" type="submit">
+                                <button class="btn btn_success Order-btnReg"
+                                        type="submit">
                                     Загрузить
                                 </button>
                             </div>
@@ -40,7 +39,8 @@
                         <h2>ИНСТРУКЦИЯ</h2>
                     </div>
                     <div>
-                       <video src="{% static '2023-06-09 11-35-34.mp4' %}" controls class="video-instruction"></video>
+                        <video src="{% static '2023-06-09 11-35-34.mp4' %}"
+                               controls class="video-instruction"></video>
                     </div>
 
                 </div>

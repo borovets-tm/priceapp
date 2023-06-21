@@ -22,4 +22,12 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('priceapp.urls')),
-] + static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
+]
+
+if settings.DEBUG:
+    urlpatterns.extend(
+        static(
+            settings.STATIC_URL,
+            document_root=settings.STATICFILES_DIRS
+        )
+    )

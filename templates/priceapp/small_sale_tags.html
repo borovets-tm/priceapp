@@ -13,20 +13,24 @@
     {% else %}
         class="small-tags-base-td black-price"
     {% endif %}
-        colspan="2" style="font-size: calc(min(75px / {{ tag.price|make_list|length }} * 6, 75px));"
+        colspan="2"
+        style="font-size: calc(min(75px / {{ tag.price|make_list|length }} * 6, 75px));"
     >{{ tag.price }}</td>
 </tr>
 
 <tr class="small-tags-fourth-line">
-    <td class="small-tags-country" style="font-size: calc(min(8px / {{ tag.country|length }} * 17, 8px));"
+    <td class="small-tags-country"
+        style="font-size: calc(min(8px / {{ tag.country|length }} * 17, 8px));"
     >{{ tag.country }}</td>
     {% now 'd.m.Y' as date %}
-    <td class="small-tags-date" style="font-size: calc(min(8px / {{ date|length }} * 17, 8px));"
+    <td class="small-tags-date"
+        style="font-size: calc(min(8px / {{ date|length }} * 17, 8px));"
     ><em>{{ date }}</em></td>
 </tr>
 
 <tr class="small-tags-second-line">
-    <td class="small-tags-base-td" colspan="2" style="font-size: calc(min(26px / {{ tag.name|length }} * 10, 26px));"
-    >{{ tag.name}}</td>
+    <td class="small-tags-base-td" colspan="2"
+        style="font-size: calc(min(26px / {{ tag.name|length }} * 10, 26px));"
+    >{{ tag.name }}</td>
 </tr>
 </tbody>

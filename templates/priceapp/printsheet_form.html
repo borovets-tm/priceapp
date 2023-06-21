@@ -15,7 +15,8 @@
                             <form class="form Cart" method="post">
                                 {% csrf_token %}
                                 {% with 'sample_tag/'|add:tag.size|add:'-'|add:tag.is_discount.1|add:'.jpg' as image %}
-                                    <img src="{% static image %}" alt="{{ image }}" class="sample-tag">
+                                    <img src="{% static image %}"
+                                         alt="{{ image }}" class="sample-tag">
                                 {% endwith %}
                                 <p>{{ form.input_line.label }}</p>
                                 {#                            Отсканировано: {{ last_scan }}<br>#}
@@ -44,14 +45,16 @@
                 </div>
                 <div class="add-custom-tag">
                     <div class="wrap wrap-add-custom-tag">
-                        <h6 class="Middle-title">Добавить ценник по уценки: <em>
-                            {% if 'Товар' in free_form.name.errors.as_text %}
-                                {{ free_form.name.errors.as_text }}
-                            {% endif %}
-                        </em>
+                        <h6 class="Middle-title">Добавить ценник по уценки:
+                            <em>
+                                {% if 'Товар' in free_form.name.errors.as_text %}
+                                    {{ free_form.name.errors.as_text }}
+                                {% endif %}
+                            </em>
                         </h6>
                         <div class="Middle-header Middle-header-free-form">
-                            <form class="row free-form" id="free_form" method="post">
+                            <form class="row free-form" id="free_form"
+                                  method="post">
                                 {% csrf_token %}
                                 {% for field in free_form %}
                                     <p>{{ field.label }}<br>{{ field }}</p>
@@ -64,10 +67,12 @@
                     </div>
                 </div>
                 <div class="Order-footer printsheet-button-area">
-                    <a class="btn btn_success btn_muted Order-btnReg" href="{% url 'priceapp:printsheet_delete' %}">
+                    <a class="btn btn_success btn_muted Order-btnReg"
+                       href="{% url 'priceapp:printsheet_delete' %}">
                         Очистить
                     </a>
-                    <a class="btn btn_success Order-btnReg" href="{% url 'priceapp:printsheet_print' %}"
+                    <a class="btn btn_success Order-btnReg"
+                       href="{% url 'priceapp:printsheet_print' %}"
                        target="_blank">
                         Сформировать
                     </a>

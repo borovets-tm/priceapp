@@ -1,7 +1,13 @@
+"""Модуль для описания моделей с которыми взаимодействует\
+приложения."""
+
 from django.db import models
 
 
 class Country(models.Model):
+    """Модель хранит в себе информацию о странах\
+    где производится товар."""
+
     name = models.CharField(
         max_length=20,
         verbose_name='название страны',
@@ -9,15 +15,26 @@ class Country(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         ordering = 'name',
         verbose_name = 'страна производства'
         verbose_name_plural = 'страны производства'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return self.name
 
 
 class Category(models.Model):
+    """Модель хранит в себе информацию о категориях товаров."""
+
     name = models.CharField(
         max_length=30,
         verbose_name='название категории',
@@ -25,15 +42,27 @@ class Category(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         ordering = 'name',
         verbose_name = 'категория товара'
         verbose_name_plural = 'категории товаров'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return self.name
 
 
 class Product(models.Model):
+    """Модель хранит в себе информацию о продаваемых товаров, \
+    включая цены на них."""
+
     sku = models.CharField(
         max_length=50,
         db_index=True,
@@ -87,15 +116,27 @@ class Product(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         ordering = '-updated_at', 'ean', 'sku'
         verbose_name = 'товар'
         verbose_name_plural = 'товары'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return f'({self.sku}) {self.name}'
 
 
 class Tag(models.Model):
+    """Модель хранит в себе информацию о макетах ценников, \
+    используемых в магазине (размер, указание старой цены и т.д."""
+
     name = models.CharField(
         max_length=30,
         verbose_name='название ценника'
@@ -121,15 +162,27 @@ class Tag(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         ordering = 'is_discount', 'name'
         verbose_name = 'ценник'
         verbose_name_plural = 'ценники'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return f'{self.name}({self.width}*{self.height})'
 
 
 class PrintSheet(models.Model):
+    """Модель хранит в себе информацию об отсканированных товаров\
+    для последующей печати ценников для них."""
+
     printed_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='дата печати'
@@ -182,15 +235,27 @@ class PrintSheet(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         ordering = 'printed_at',
         verbose_name = 'ценник для печати'
         verbose_name_plural = 'ценники для печати'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return f'{self.tag} {self.name!r}'
 
 
 class UpdateProduct(models.Model):
+    """Модель хранит в себе список товаров для обновления\
+    цен на них в БД."""
+
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -216,15 +281,27 @@ class UpdateProduct(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         ordering = 'update_at',
         verbose_name = 'обновляемый товар'
         verbose_name_plural = 'список обновления'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return self.name
 
 
 class MissingProduct(models.Model):
+    """Модель хранит в себе список товаров, которые\
+    не были найдены в БД при обновлении цен."""
+
     sku = models.CharField(
         max_length=50,
         null=True,
@@ -286,8 +363,17 @@ class MissingProduct(models.Model):
     )
 
     class Meta:
+        """Meta класс для хранения правил сортировки, \
+        названий объектов в единичном и множественном \
+        числах."""
+
         verbose_name = 'отсутствующий товар'
         verbose_name_plural = 'отсутствующие товары'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Вывод представления объекта.
+
+        :return: str.
+        """
         return self.sku

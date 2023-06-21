@@ -1,3 +1,9 @@
+"""
+В модуле собраны все представления для работы приложения.
+
+Все обработки позволяют реализовать требуемый функционал.
+"""
+
 import re
 from _csv import reader
 
@@ -168,7 +174,10 @@ class PrintSheetView(View):
             if free_form.is_valid():
                 free_form.add_error('name', f'Товар {error_flag} не найден!')
             else:
-                form.add_error('input_line', f'Товар {error_flag}\n\n не найден!')
+                form.add_error(
+                    'input_line',
+                    f'Товар {error_flag}\n\n не найден!'
+                )
             context = {
                 'form': form,
                 'free_form': free_form,
@@ -284,7 +293,10 @@ class ProductICQUpdateView(View):
             form = form.cleaned_data
             text = form['text'].split('\r\n')
             regex = r'\s{1,2}\-{1,3}\s{0,2}'
-            update_list = map(lambda x: [elem.strip() for elem in re.split(regex, x)], text)
+            update_list = map(
+                lambda x: [elem.strip() for elem in re.split(regex, x)],
+                text
+            )
             for product in update_list:
                 if len(product) == 2:
                     name, price = product
@@ -369,13 +381,21 @@ class ProductUpdateView(View):
                 product = Product.objects.filter(sku=row[0])
                 if product:
                     product = product.first()
-                    update_product = UpdateProduct(name=product.name, price=row[1], old_price=row[2])
+                    update_product = UpdateProduct(
+                        name=product.name,
+                        price=row[1],
+                        old_price=row[2]
+                    )
                     if update_product.name not in product_name_list:
                         update_product_list.append(update_product)
                         product_name_list.append(product.name)
                 else:
                     missing_product_list.append(
-                        MissingProduct(sku=row[0], price=row[1], old_price=row[2])
+                        MissingProduct(
+                            sku=row[0],
+                            price=row[1],
+                            old_price=row[2]
+                        )
                     )
         if missing_product_list:
             MissingProduct.objects.bulk_create(missing_product_list)
@@ -519,9 +539,17 @@ class MissingProductFormView(UserPassesTestMixin, View):
 
 
 class ProductCreateView(CreateView):
-    """Представление основано на CreateView для создания \
-    новых товаров"""
+    """Представление для создания новых товаров."""
 
     model = Product
-    fields = 'sku', 'ean', 'name', 'category', 'country', 'price', 'old_price', 'red_price'
+    fields = (
+        'sku',
+        'ean',
+        'name',
+        'category',
+        'country',
+        'price',
+        'old_price',
+        'red_price',
+    )
     success_url = reverse_lazy('priceapp:printsheet_delete')

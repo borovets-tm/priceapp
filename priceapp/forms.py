@@ -1,10 +1,43 @@
+"""
+Модуль хранит в себе формы для работы приложения.
+
+Помимо обычных форм. В модуле используется объявление форм-сетов.
+"""
+
 from django import forms
 from django.forms import modelformset_factory
 
 from .models import Tag, UpdateProduct, MissingProduct
 
 
+# Formset используется при подтверждении обновления цен Товаров.
+ProductConfirmUpdateSet = modelformset_factory(
+    UpdateProduct,
+    fields=('name', 'price', 'old_price', 'red_price')
+)
+
+
+# FormSet используется для добавления всех Товаров, ненайденных в БД при
+# обновлении.
+MissingProductFormSet = modelformset_factory(
+    MissingProduct,
+    fields=(
+        'sku',
+        'ean',
+        'name',
+        'category',
+        'country',
+        'price',
+        'old_price',
+        'red_price'
+    )
+)
+
+
 class PrintSheetForm(forms.Form):
+    """Форма для сканирования штрихкодов с упаковок товаров и передачи \
+    информации об используемом макете ценников."""
+
     input_line = forms.CharField(
         max_length=100,
         label='Штрихкод/Название'
@@ -20,6 +53,8 @@ class PrintSheetForm(forms.Form):
 
 
 class PrintSheetFreeForm(forms.Form):
+    """Форма для добавления в Лист печати ценников товаров по уценки."""
+
     name = forms.CharField(
         label='Наименование',
         widget=forms.TextInput(
@@ -38,7 +73,10 @@ class PrintSheetFreeForm(forms.Form):
                 'class': 'form-input',
                 'placeholder': '19990',
                 'type': 'text',
-                'style': 'min-width: 150px; width:150px; min-height: 30px; height: 30px'
+                'style': (
+                    'min-width: 150px; width:150px; '
+                    'min-height: 30px; height: 30px'
+                )
             }
         )
     )
@@ -49,7 +87,10 @@ class PrintSheetFreeForm(forms.Form):
                 'class': 'form-input',
                 'placeholder': '15990',
                 'type': 'text',
-                'style': 'min-width: 150px; width:150px; min-height: 30px; height: 30px'
+                'style': (
+                    'min-width: 150px; width:150px; '
+                    'min-height: 30px; height: 30px'
+                )
             }
         )
     )
@@ -71,7 +112,10 @@ class PrintSheetFreeForm(forms.Form):
             attrs={
                 'class': 'toggle',
                 'type': 'checkbox',
-                'style': 'min-width: 50px; width: 50px; min-height: 30px; height: 30px;',
+                'style': (
+                    'min-width: 50px; width: 50px; '
+                    'min-height: 30px; height: 30px;'
+                )
             }
         ),
         required=False
@@ -90,23 +134,22 @@ class PrintSheetFreeForm(forms.Form):
 
 
 class ProductICQUpdateForm(forms.Form):
+    """Форма для обновления цен из текстовой информации, полученной по \
+    средствам мессенджера ICQ."""
+
     text = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-text-update-icq', 'cols': 40, 'rows': 15}),
+        widget=forms.Textarea(
+            attrs={
+                'class': 'form-text-update-icq',
+                'cols': 40,
+                'rows': 15
+            }
+        ),
         label='Вставьте текст из ICQ со списком товаров и цен.'
     )
 
 
-ProductConfirmUpdateSet = modelformset_factory(
-    UpdateProduct,
-    fields=('name', 'price', 'old_price', 'red_price')
-)
-
-
 class FileDownloadForm(forms.Form):
+    """Форма для обновления цен из файла при новой поставке."""
+
     file = forms.FileField()
-
-
-MissingProductFormSet = modelformset_factory(
-    MissingProduct,
-    fields=('sku', 'ean', 'name', 'category', 'country', 'price', 'old_price', 'red_price')
-)
