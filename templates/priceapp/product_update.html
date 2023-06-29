@@ -14,10 +14,14 @@
                     </header>
                     <div class="Cards" style="width: 100%">
                         {% csrf_token %}
-                        <h4>Скачайте и заполните файл по ссылке: <a
-                                class="btn btn_success button-download"
-                                href="{% static 'product_update.csv' %}">СКАЧАТЬ</a>
-                        </h4>
+                        {% if message_user %}
+                            <h4 class="form-error">{{ message_user }}</h4>
+                        {% else %}
+                            <h4>Скачайте и заполните файл по ссылке: <a
+                                    class="btn btn_success button-download"
+                                    href="{% static 'product_update.csv' %}">СКАЧАТЬ</a>
+                            </h4>
+                        {% endif %}
                         <div class="form Cart" style="margin-left: 10px">
                             Загрузите заполненный файл:
                             <div>
@@ -36,19 +40,22 @@
             <div class="block-instruction-update-product Cards">
                 <div class="Card block-video-instruction">
                     <div class="row-instruction-by-update-price">
-                        <h2>ИНСТРУКЦИЯ</h2>
+                        <h2>
+                            &#9658;
+                            <a href="{% url 'priceapp:update_instruction' %}"
+                            >ИНСТРУКЦИЯ ТУТ</a>
+                            &#9668;
+                        </h2>
                     </div>
-                    <div>
-                        <video src="{% static '2023-06-09 11-35-34.mp4' %}"
-                               controls class="video-instruction"></video>
-                    </div>
-
+                    {#                    <div>#}
+                    {#                        <video src="{% static '2023-06-09 11-35-34.mp4' %}"#}
+                    {#                               controls class="video-instruction"></video>#}
+                    {#                    </div>#}
                 </div>
                 <div>
 
                 </div>
             </div>
-
         </div>
     </div>
 

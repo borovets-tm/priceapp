@@ -5,7 +5,8 @@
 """
 
 import re
-from _csv import reader
+from csv import DictReader
+from io import TextIOWrapper
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q
@@ -97,6 +98,9 @@ class PrintSheetView(View):
             'tag_list': self.tag_list,
             'last_scan': last_scan
         }
+        if request.session.get('message_user'):
+            context['message_user'] = request.session['message_user']
+            request.session.pop('message_user')
         return render(
             request,
             'priceapp/printsheet_form.html',
@@ -112,7 +116,7 @@ class PrintSheetView(View):
         :return: HttpResponse.
         """
         global last_scan
-        error_flag = ''
+        product = None
         form = PrintSheetForm(request.POST)
         free_form = PrintSheetFreeForm(request.POST)
         tag = last_scan['tag']
@@ -138,7 +142,7 @@ class PrintSheetView(View):
                 .first()
             )
             if not product:
-                error_flag = input_line
+                request.session['message_user'] = input_line
 
         if free_form.is_valid():
             form = free_form.cleaned_data
@@ -150,9 +154,6 @@ class PrintSheetView(View):
                     'name',
                     'category',
                     'country',
-                    'price',
-                    'old_price',
-                    'red_price'
                 )
                 .first()
             )
@@ -165,40 +166,18 @@ class PrintSheetView(View):
                 product['old_price'] = form['old_price']
                 product['red_price'] = form['red_price']
             else:
-                error_flag = form['name']
+                request.session['message_user'] = form['name']
         last_scan['tag'] = tag
-        if error_flag:
-            form = PrintSheetForm(request.POST.copy())
-            form.data['input_line'] = ''
-            form.errors.pop('input_line')
-            if free_form.is_valid():
-                free_form.add_error('name', f'Товар {error_flag} не найден!')
-            else:
-                form.add_error(
-                    'input_line',
-                    f'Товар {error_flag}\n\n не найден!'
-                )
-            context = {
-                'form': form,
-                'free_form': free_form,
-                'tag_list': self.tag_list,
-                'last_scan': last_scan
-            }
-            return render(
-                request,
-                'priceapp/printsheet_form.html',
-                context=context
-            )
-        else:
+        if product:
             last_scan['product'] = product['name']
             product['category'] = (
                 Category.objects.only('name')
-                .get(pk=product['category'])
+                .get(id=product['category'])
                 .name
             )
             product['country'] = (
                 Country.objects.only('name')
-                .get(pk=product['country'])
+                .get(id=product['country'])
                 .name
             )
             PrintSheet.objects.create(
@@ -299,9 +278,7 @@ class ProductICQUpdateView(View):
             )
             for product in update_list:
                 if len(product) == 2:
-                    name, price = product
-                    old_price = 0
-                elif len(product) == 3:
+                    product.append('0')
                     name, old_price, price = product
                 else:
                     continue
@@ -351,6 +328,9 @@ class ProductUpdateView(View):
         context = {
             'form': form,
         }
+        if request.session.get('message_user'):
+            context['message_user'] = request.session.get('message_user')
+            request.session.pop('message_user')
         return render(
             request,
             'priceapp/product_update.html',
@@ -370,40 +350,58 @@ class ProductUpdateView(View):
         global before_redirect_url, missing_products_flag
         before_redirect_url = request.path
         form = FileDownloadForm(request.POST, request.FILES)
-        update_product_list = []
-        product_name_list = []
-        missing_product_list = []
-        if form.is_valid():
-            file = form.cleaned_data['file'].read().strip()
-            price_str = file.decode('utf-8').split('\n')[1:]
-            csv_reader = reader(price_str, delimiter=';', quotechar='"')
-            for row in csv_reader:
-                product = Product.objects.filter(sku=row[0])
-                if product:
-                    product = product.first()
-                    update_product = UpdateProduct(
-                        name=product.name,
-                        price=row[1],
-                        old_price=row[2]
-                    )
-                    if update_product.name not in product_name_list:
-                        update_product_list.append(update_product)
-                        product_name_list.append(product.name)
-                else:
-                    missing_product_list.append(
-                        MissingProduct(
-                            sku=row[0],
-                            price=row[1],
-                            old_price=row[2]
-                        )
-                    )
-        if missing_product_list:
-            MissingProduct.objects.bulk_create(missing_product_list)
-            missing_products_flag = True
-        if update_product_list:
-            UpdateProduct.objects.bulk_create(update_product_list)
-            return redirect(reverse('priceapp:product_confirm_update'))
-        return redirect(reverse('priceapp:missingproduct_form'))
+        if (
+                form.is_valid()
+                and form.files['file']._name == 'product_update.csv'
+        ):
+            csv_file = TextIOWrapper(
+                form.files['file'].file,
+                encoding=request.encoding
+            )
+            reader = DictReader(csv_file, delimiter=';')
+            data_list = {row['sku']: row for row in reader}
+            product_sku_list = list(data_list.keys())
+            product_list = (
+                Product.objects
+                .only('sku', 'name')
+                .filter(sku__in=product_sku_list)
+            )
+            product_missing_sku_list = [
+                sku
+                for sku in product_sku_list
+                if sku not in product_list.values_list('sku', flat=True)
+            ]
+            update_product_list = [
+                UpdateProduct(
+                    name=product.name,
+                    price=data_list[product.sku]['price'],
+                    old_price=data_list[product.sku]['old_price'],
+                )
+                for product in product_list
+            ]
+            missing_product_list = [
+                MissingProduct(**data_list[sku])
+                for sku in product_missing_sku_list
+            ]
+            if missing_product_list:
+                MissingProduct.objects.bulk_create(missing_product_list)
+                missing_products_flag = True
+            if update_product_list:
+                UpdateProduct.objects.bulk_create(
+                    update_product_list,
+                    ignore_conflicts=True
+                )
+                return redirect(reverse('priceapp:product_confirm_update'))
+            return redirect(reverse('priceapp:missingproduct_form'))
+        request.session['message_user'] = (
+            'В файле обнаружена ошибка!'
+            'Проверьте заполнение и повторите попытку!'
+        )
+        return redirect(
+            reverse(
+                'priceapp:product_update'
+            )
+        )
 
 
 class ProductConfirmUpdateView(View):
@@ -477,7 +475,7 @@ class MissingProductFormView(UserPassesTestMixin, View):
 
     def test_func(self) -> bool:
         """
-        Проверяет наличие объектов в списке Ненайденых товаров.
+        Проверяет наличие объектов в списке Ненайденных товаров.
 
         :return: bool.
         """
@@ -553,3 +551,10 @@ class ProductCreateView(CreateView):
         'red_price',
     )
     success_url = reverse_lazy('priceapp:printsheet_delete')
+
+
+def update_instruction_get(request: HttpRequest) -> HttpResponse:
+    return render(
+        request,
+        'priceapp/product_update_instruction.html'
+    )

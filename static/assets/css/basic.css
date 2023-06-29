@@ -3362,7 +3362,7 @@ table.table-with-missing-product td > select[id$='category'] {
 }
 
 .video-instruction {
-    width: 1080px;
+    width: 920px;
 }
 
 .block-video-instruction {
@@ -3412,4 +3412,8 @@ table.table-create-product-form {
 .middle-margin-null {
     margin-bottom: 0 !important;
     padding-bottom: 10px !important;
+}
+
+.green-text {
+    color: green;
 }

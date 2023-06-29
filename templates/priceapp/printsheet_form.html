@@ -18,19 +18,20 @@
                                     <img src="{% static image %}"
                                          alt="{{ image }}" class="sample-tag">
                                 {% endwith %}
-                                <p>{{ form.input_line.label }}</p>
-                                {#                            Отсканировано: {{ last_scan }}<br>#}
                                 {% if tag.size == last_scan.tag.size and tag.is_discount.0 == last_scan.tag.is_discount %}
-                                    {% if form.input_line.errors %}
-                                        <p>{{ form.input_line.errors.as_text|linebreaks }}</p>
+                                    {% if message_user %}
+                                        <p class="red-price">Товар {{ message_user }}</p>
+                                        <p class="red-price">не найден!</p>
                                     {% else %}
-                                        <p>Последний добавленный:</p>
-                                        <p>{{ last_scan.product }}</p>
+                                        <p class="black-price">Последний добавленный:</p>
+                                        <p class="green-text">{{ last_scan.product }}</p>
                                     {% endif %}
+                                    <p>&#8595; <em>{{ form.input_line.label }}</em> &#8595;</p>
                                     {{ form.input_line|attr:"autofocus" }}
                                 {% else %}
                                     <p>&nbsp;</p>
                                     <p>&nbsp;</p>
+                                    <p>&#8595; <em>{{ form.input_line.label }}</em> &#8595;</p>
                                     {{ form.input_line }}
                                 {% endif %}
                                 {% with 'value:'|add:tag.size as size %}
@@ -46,11 +47,6 @@
                 <div class="add-custom-tag">
                     <div class="wrap wrap-add-custom-tag">
                         <h6 class="Middle-title">Добавить ценник по уценки:
-                            <em>
-                                {% if 'Товар' in free_form.name.errors.as_text %}
-                                    {{ free_form.name.errors.as_text }}
-                                {% endif %}
-                            </em>
                         </h6>
                         <div class="Middle-header Middle-header-free-form">
                             <form class="row free-form" id="free_form"

@@ -11,6 +11,7 @@ from .views import (
     ProductUpdateView,
     ProductCreateView,
     MissingProductFormView,
+    update_instruction_get,
 )
 
 
@@ -36,5 +37,10 @@ urlpatterns = [
         'update/add-missing/',
         MissingProductFormView.as_view(),
         name='missingproduct_form'
+    ),
+    path(
+        'update/instruction/',
+        update_instruction_get,
+        name='update_instruction'
     ),
 ]
