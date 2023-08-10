@@ -279,7 +279,7 @@ class ProductICQUpdateView(View):
             for product in update_list:
                 if len(product) == 2:
                     product.append('0')
-                    name, old_price, price = product
+                    name, price, old_price = product
                 else:
                     continue
                 product = Product.objects.filter(name=name).first()
